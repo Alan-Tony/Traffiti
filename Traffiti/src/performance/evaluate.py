@@ -38,7 +38,7 @@ lane_length = 200
 cell_length = 8
 epochs = 20
 
-from agent import Agent
+from Traffiti.src.model.agent import Agent
 
 def generate_routefile():
     random.seed(69)  # make tests reproducible

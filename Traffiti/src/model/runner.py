@@ -36,7 +36,7 @@ import traci  # noqa
 
 lane_length = 200
 cell_length = 8
-epochs = 100
+epochs = 5
 
 from agent import Agent
 
@@ -89,7 +89,7 @@ guiShape="passenger"/>
 #    </tlLogic>
 
 def get_state(lights):
-    lanes = ['1i_0','2i_0','3i_0','4i_0']
+    lanes = ['B1B2_0','C1B1_0','B0B1_0','A1B1_0']
     state = []
     for lane in lanes:
         substate = np.zeros((2,int(lane_length/cell_length)))
@@ -114,7 +114,7 @@ def get_state(lights):
 
 def get_cost():
     cost = 0
-    lanes = ['1i_0','2i_0','3i_0','4i_0']
+    lanes = ['B1B2_0','C1B1_0','B0B1_0','A1B1_0']
     for lane in lanes:
         cost += traci.lane.getLastStepHaltingNumber(lane)
     return cost
@@ -143,7 +143,8 @@ def run():
     # we start with phase 2 where EW has green
     # a:0 -> NS
     # a:1 -> EW
-    light = traci.trafficlight.getPhase("0")
+    tlID = traci.trafficlight.getIDList()[0]
+    light = traci.trafficlight.getPhase(tlID)
     if light == 0:
         lights.append(0)
     else:
@@ -157,14 +158,14 @@ def run():
 
     #choose action
     if a == 0:
-        traci.trafficlight.setPhase("0", 0)
+        traci.trafficlight.setPhase(tlID, 0)
     else:
-        traci.trafficlight.setPhase("0", 2)
+        traci.trafficlight.setPhase(tlID, 2)
 
-    while step < 1500:
+    while step < 100:
         traci.simulationStep()
 
-        light = traci.trafficlight.getPhase("0")
+        light = traci.trafficlight.getPhase(tlID)
         if light == 0:
             lights.append(0)
         else:
@@ -188,9 +189,9 @@ def run():
         instance.append(a)
 
         if a == 0:
-            traci.trafficlight.setPhase("0", 0)
+            traci.trafficlight.setPhase(tlID, 0)
         else:
-            traci.trafficlight.setPhase("0", 2)
+            traci.trafficlight.setPhase(tlID, 2)
 
         step += 1
 

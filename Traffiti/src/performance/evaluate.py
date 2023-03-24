@@ -38,7 +38,7 @@ lane_length = 200
 cell_length = 8
 epochs = 20
 
-from Traffiti.src.model.agent import Agent
+from agent import Agent
 
 def generate_routefile():
     random.seed(69)  # make tests reproducible
@@ -46,17 +46,19 @@ def generate_routefile():
     # demand per second from different directions
     pWE = 1. / 10
     pEW = 1. / 11
-    pNS = 1. / 15
-    pSN = 1. / 16
+    pNS = 1. / 30
+    pSN = 1. / 31
+
+    #os.chdir(os.path.join(os.getcwd(), "model"))
     with open("data/cross.rou.xml", "w+") as routes:
         print("""<routes>
         <vType id="typeWE" accel="0.8" decel="4.5" sigma="0.5" length="5" minGap="2.5" maxSpeed="16.67" \
 guiShape="passenger"/>
         <vType id="typeNS" accel="0.8" decel="4.5" sigma="0.5" length="7" minGap="3" maxSpeed="25" guiShape="bus"/>
-        <route id="right" edges="51o 1i 2o 52i" />
-        <route id="left" edges="52o 2i 1o 51i" />
-        <route id="down" edges="54o 4i 3o 53i" />
-        <route id="up" edges="53o 3i 4o 54i" />""", file=routes)
+        <route id="right" edges="A1B1 B1C1" />
+        <route id="left" edges="C1B1 B1A1" />
+        <route id="down" edges="B2B1 B1B0" />
+        <route id="up" edges="B0B1 B1B2" />""", file=routes)
         vehNr = 0
         for i in range(N):
             if random.uniform(0, 1) < pWE:
@@ -87,7 +89,7 @@ guiShape="passenger"/>
 #    </tlLogic>
 
 def get_state(lights):
-    lanes = ['1i_0','2i_0','3i_0','4i_0']
+    lanes = ['B1B2_0','C1B1_0','B0B1_0','A1B1_0']
     state = []
     for lane in lanes:
         substate = np.zeros((2,int(lane_length/cell_length)))
@@ -112,7 +114,7 @@ def get_state(lights):
 
 def get_cost():
     cost = 0
-    lanes = ['1i_0','2i_0','3i_0','4i_0']
+    lanes = ['B1B2_0','C1B1_0','B0B1_0','A1B1_0']
     for lane in lanes:
         cost += traci.lane.getLastStepHaltingNumber(lane)
     return cost
@@ -136,7 +138,8 @@ def run():
     # we start with phase 2 where EW has green
     # a:0 -> NS
     # a:1 -> EW
-    light = traci.trafficlight.getPhase("0")
+    tlID = traci.trafficlight.getIDList()[0]
+    light = traci.trafficlight.getPhase(tlID)
     if light == 0:
         lights.append(0)
     else:
@@ -150,14 +153,14 @@ def run():
 
     #choose action
     if a == 0:
-        traci.trafficlight.setPhase("0", 0)
+        traci.trafficlight.setPhase(tlID, 0)
     else:
-        traci.trafficlight.setPhase("0", 2)
+        traci.trafficlight.setPhase(tlID, 2)
 
     while step < 1500:
         traci.simulationStep()
 
-        light = traci.trafficlight.getPhase("0")
+        light = traci.trafficlight.getPhase(tlID)
         if light == 0:
             lights.append(0)
         else:
@@ -180,9 +183,9 @@ def run():
         instance.append(a)
 
         if a == 0:
-            traci.trafficlight.setPhase("0", 0)
+            traci.trafficlight.setPhase(tlID, 0)
         else:
-            traci.trafficlight.setPhase("0", 2)
+            traci.trafficlight.setPhase(tlID, 2)
 
         step += 1
 
@@ -204,7 +207,7 @@ def get_options():
 if __name__ == "__main__":
 
     agent = Agent()
-    agent.load('v1.h5')
+    agent.load('5.h5')
 
     options = get_options()
 
